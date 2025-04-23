@@ -1,0 +1,98 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(100px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-100px);
+    opacity: 0.8;
+  }
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    /* Watch2Give color palette */
+    --navy: 246 54% 27%; /* #2D2A5E - Deep purple/navy */
+    --coral: 6 100% 67%; /* #FF6B5B - Coral/orange */
+    --teal: 174 62% 40%; /* #26A69A - Teal */
+    --amber: 37 100% 66%; /* #FFBB54 - Amber/yellow */
+
+    --background: 6 100% 67%;
+    --foreground: 246 54% 27%;
+    --card: 246 54% 27%;
+    --card-foreground: 0 0% 100%;
+    --popover: 246 54% 27%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 37 100% 66%;
+    --primary-foreground: 246 54% 27%;
+    --secondary: 174 62% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 246 30% 40%;
+    --muted-foreground: 0 0% 90%;
+    --accent: 6 100% 67%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 246 30% 40%;
+    --input: 246 30% 40%;
+    --ring: 37 100% 66%;
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Streak indicators */
+.streak-dot {
+  @apply h-3 w-3 rounded-full inline-block mx-0.5;
+}
+
+.streak-active {
+  @apply bg-[#FF6B5B];
+}
+
+.streak-inactive {
+  @apply bg-[#6A67A8];
+}
+
+/* Progress bar */
+.progress-bar {
+  @apply h-2 rounded-full bg-[#26A69A];
+}
+
+.progress-track {
+  @apply h-2 rounded-full bg-[#6A67A8];
+}
+
+/* Custom gradient background */
+.gradient-background {
+  background: linear-gradient(180deg, #ff6a3d 0%, #ff5673 30%, #c44bc0 100%);
+  background-attachment: fixed; /* This ensures the gradient covers the full page */
+}
