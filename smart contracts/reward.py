@@ -210,8 +210,6 @@ def get_user_stats(user_id: str):
         "gives": row[3]
     }
 
-
-
 @app.post("/record_give/{user_id}")
 def record_give(user_id: str, request: GiveRequest):
     """
@@ -253,7 +251,6 @@ def record_give(user_id: str, request: GiveRequest):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
-
 
 
 # ===== SPONSOR REWARDS ===== #
@@ -341,7 +338,6 @@ def check_rewards(user_id: str):
     
     conn.close()
     return response
-
 
 
 # ===== RUN SERVER ===== #

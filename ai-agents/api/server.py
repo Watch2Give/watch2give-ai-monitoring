@@ -43,13 +43,13 @@ class PhotoRequest(BaseModel):
 def run_give_router(data: GiveRouterRequest):
     logger.info(f"[GiveRouter] Running GiveRouterAgent...")
     try:
-        logger.info(f"Received data: {data.model_dump_json()}")
+        logger.info(f"[RouterAgent] - Received data: {data.model_dump_json()}")
         agent = RouterAgent()
         result = agent.run(data.model_dump())
-        logger.info(f"GiveRouter result: {result}")
+        logger.info(f"[RouterAgent] - GiveRouter result: {result}")
         return result
     except Exception as e:
-        logger.error(f"GiveRouter Error: {e}")
+        logger.error(f"[RouterAgent] - GiveRouter Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -57,13 +57,13 @@ def run_give_router(data: GiveRouterRequest):
 def run_vault_decider(data: VaultRequest):
     logger.info(f"[VaultDecider] Running VaultDeciderAgent...")
     try:
-        logger.info(f"Received data: {data.model_dump_json()}")
+        logger.info(f"[VaultDecider] - Received data: {data.model_dump_json()}")
         agent = VaultDeciderAgent()
         result = agent.run(data.model_dump())
-        logger.info(f"VaultDecider result: {result}")
+        logger.info(f"[VaultDecider] - VaultDecider result: {result}")
         return result
     except Exception as e:
-        logger.error(f"VaultDecider Error: {e}")
+        logger.error(f"[VaultDecider] - VaultDecider Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -71,13 +71,13 @@ def run_vault_decider(data: VaultRequest):
 def run_reward(data: RewardRequest):
     logger.info(f"[RewardAgent] Running RewardAgent...")
     try:
-        logger.info(f"Received data: {data.model_dump_json()}")
+        logger.info(f"[RewardAgent] - Received data: {data.model_dump_json()}")
         agent = RewardAgent()
         result = agent.run(data.model_dump())
-        logger.info(f"Reward result: {result}")
+        logger.info(f"[RewardAgent] - Reward result: {result}")
         return result
     except Exception as e:
-        logger.error(f"RewardAgent Error: {e}")
+        logger.error(f"[RewardAgent] - RewardAgent Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -85,14 +85,14 @@ def run_reward(data: RewardRequest):
 def run_photo_validator(data: PhotoRequest):
     logger.info(f"[PhotoValidator] Running PhotoValidatorAgent...")
     try:
-        logger.info(f"Received data: {data.model_dump_json()}")
+        logger.info(f"[PhotoValidator] - Received data: {data.model_dump_json()}")
         val_result, score = validate_photo(data.photo_path)
-        logger.info(f"Validation result: {val_result}, Score: {score}")
+        logger.info(f"[PhotoValidator] - Validation result: {val_result}, Score: {score}")
         return {
             "validation_result": val_result,
             "score": score
         }
 
     except Exception as e:
-        logger.error(f"PhotoValidator Error: {e}")
+        logger.error(f"[PhotoValidator] - PhotoValidator Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

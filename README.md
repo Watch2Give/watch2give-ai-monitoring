@@ -42,7 +42,7 @@ pip install -r requirements.txt
 ### 3. Start the FastAPI agent service
 ```bash
 cd ai-agents
-uvicorn main:app --reload
+uvicorn api.server:app --reload
 ```
 
 ### 4. Launch Streamlit dashboard
