@@ -221,7 +221,4 @@ with tab4:
 
 # --- Sidebar Controls ---
 with st.sidebar:
-    st.header("Controls")
-    if st.button("🔄 Refresh Data"):
-        st.rerun()
     st.metric("Total Tokens Circulating", f"{heatmap_data.sum().sum()}")
