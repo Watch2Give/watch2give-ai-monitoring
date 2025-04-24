@@ -1,3 +1,4 @@
+# gamification_rewards.py
 import sqlite3
 import json
 from datetime import datetime, timedelta
@@ -12,6 +13,8 @@ app = FastAPI()
 def init_db():
     conn = sqlite3.connect("rewards.db")
     cursor = conn.cursor()
+    
+    # Create users table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id TEXT PRIMARY KEY,
@@ -23,6 +26,16 @@ def init_db():
             gives INTEGER DEFAULT 0
         )
     """)
+    
+    # Create token_flow table with dynamic columns for hours 0-23
+    columns = ", ".join([f'"{hour}" INTEGER DEFAULT 0' for hour in range(24)])
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS token_flow (
+            city TEXT PRIMARY KEY,
+            {columns}
+        )
+    """)
+    
     conn.commit()
     conn.close()
 
@@ -39,6 +52,12 @@ class BadgeRequest(BaseModel):
 
 class GiveRequest(BaseModel):
     count: int = 1  # Default to 1 if not specified
+
+class TokenFlowUpdate(BaseModel):
+    city: str
+    tokens: int  # Removed the hour field
+
+
 
 # ===== CORE FUNCTIONS ===== #
 def get_db_connection():
@@ -340,6 +359,143 @@ def check_rewards(user_id: str):
     conn.close()
     return response
 
+
+#================== Token Flow ===============#
+
+
+@app.post("/update_token_flow")
+def update_token_flow(update: TokenFlowUpdate):
+    # Automatically get current hour
+    current_hour = datetime.now().hour
+    
+    if update.tokens < 0:
+        raise HTTPException(status_code=400, detail="Tokens cannot be negative")
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # First try to update existing city record
+        cursor.execute(f"""
+            UPDATE token_flow 
+            SET "{current_hour}" = "{current_hour}" + ? 
+            WHERE city = ?
+        """, (update.tokens, update.city))
+        
+        # If no rows were updated, insert new city record
+        if cursor.rowcount == 0:
+            # Create a dictionary with all hours set to 0, then update our target hour
+            values = {str(hour): 0 for hour in range(24)}
+            values[str(current_hour)] = update.tokens
+            
+            # Generate the SQL for insertion
+            columns = ", ".join([f'"{k}"' for k in values.keys()])
+            placeholders = ", ".join(["?"] * (len(values) + 1))
+            query = f"""
+                INSERT INTO token_flow (city, {columns}) 
+                VALUES (?, {", ".join(["?"] * len(values))})
+            """
+            cursor.execute(query, [update.city] + list(values.values()))
+        
+        conn.commit()
+        return {
+            "status": "success", 
+            "city": update.city,
+            "hour": current_hour,  # Include the hour used in the response
+            "tokens_added": update.tokens
+        }
+    
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.get("/get_token_flow/{city}")
+def get_token_flow(city: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Get all columns for the city
+        cursor.execute("""
+            SELECT * FROM token_flow WHERE city = ?
+        """, (city,))
+        
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="City not found")
+        
+        # Convert row to dictionary
+        columns = [description[0] for description in cursor.description]
+        data = dict(zip(columns, row))
+        
+        # Format the hourly data
+        hourly_data = {
+            int(hour): data[str(hour)] 
+            for hour in range(24) 
+            if str(hour) in data
+        }
+        hourly_data = {f"{int(k):02d}:00": v for k, v in hourly_data.items()}
+        
+        return {
+            "city": data["city"],
+            "hourly_tokens": hourly_data,
+            "total_tokens": sum(hourly_data.values())
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.get("/get_token_flow_cities")
+def get_token_flow_cities():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT city FROM token_flow")
+        cities = [row[0] for row in cursor.fetchall()]
+        return {"cities": cities}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.get("/get_all_token_flow")
+def get_all_token_flow():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Get all data from token_flow table
+        cursor.execute("SELECT * FROM token_flow")
+        rows = cursor.fetchall()
+        
+        if not rows:
+            return {"message": "No token flow data available"}
+        
+        # Get column names
+        columns = [description[0] for description in cursor.description]
+        
+        # Convert to list of dictionaries (pandas-friendly format)
+        data = []
+        for row in rows:
+            record = dict(zip(columns, row))
+            # Convert hour columns to integers in the dictionary
+            record = {k: (int(v) if k.isdigit() else v) for k, v in record.items()}
+            data.append(record)
+        
+        return {
+            "columns": columns,
+            "data": data
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 
 # ===== RUN SERVER ===== #
