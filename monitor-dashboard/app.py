@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
+import requests
 
 from datetime import datetime
 import json
@@ -119,13 +120,13 @@ df_agents = pd.DataFrame(structured_logs)[::-1][:100]
 
 #==========================Token flow data==================================
 
-# Mock token flow data
-cities = ["New York", "Lagos", "Mumbai", "São Paulo", "Jakarta", "Berlin", "Tokyo"]
-hours = [f"{h}:00" for h in range(6, 24)]  # 6AM to 11PM
-
-# Random token amounts (100-5000) per city/hour
-data = np.random.randint(100, 5000, size=(len(hours), len(cities)))
-heatmap_data = pd.DataFrame(data, columns=cities, index=hours)
+response = requests.get("http://localhost:8000/get_all_token_flow")
+data = response.json()
+# Convert to DataFrame
+heatmap_data = pd.DataFrame(data["data"])
+# Set city as index if desired
+heatmap_data.set_index("city", inplace=True)
+heatmap_data = heatmap_data.T
 
 
 #==========================Vault yield status==================================
@@ -143,7 +144,7 @@ if isinstance(result, dict):
 vault = {
     "Vendor ID": [entry["vendor_id"] for entry in result],
     "APY (%)": [entry["vendor_apy"] for entry in result],
-    "Total Staked Tokens": [entry["tokens"] for entry in result],
+    "Staked Tokens": [entry["tokens"] for entry in result],
     "Chain": None
 }
 
@@ -204,8 +205,11 @@ with tab3:
 
     st.dataframe(df_vaults, hide_index=True)
 
+    # Create a copy for the chart with renamed column
+    df_chart = df_vaults.rename(columns={"Staked Tokens": "Total Staked Tokens"})
+
     # APY Bar Chart
-    st.bar_chart(df_vaults, x="Vendor ID", y="Total Staked Tokens")
+    st.bar_chart(df_chart, x="Vendor ID", y="Total Staked Tokens")
 
 
 with tab4:
@@ -220,4 +224,4 @@ with st.sidebar:
     st.header("Controls")
     if st.button("🔄 Refresh Data"):
         st.rerun()
-    st.metric("Total Tokens Circulating", "58,942", "+12% today")
+    st.metric("Total Tokens Circulating", f"{heatmap_data.sum().sum()}")
